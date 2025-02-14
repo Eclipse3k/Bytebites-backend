@@ -1,5 +1,6 @@
 # filepath: /home/jorge/projects/bytebites-backend/app/auth.py
 from flask import Blueprint, request, jsonify
+from flask_jwt_extended import create_access_token
 from . import db
 from .models import User
 
@@ -28,24 +29,27 @@ def register():
     db.session.commit()
 
     return jsonify({"message": "User created successfully"}), 201
-
+    
 @auth_bp.route('/login', methods=['POST'])
 def login():
     data = request.get_json()
-    login_value = data.get('username')  # can be a username or email
+    login_value = data.get('username')
     password = data.get('password')
 
     if not login_value or not password:
         return jsonify({"message": "Missing login or password"}), 400
 
-    # Determine if the provided login_value is an email or username
     if "@" in login_value:
         user = User.query.filter_by(email=login_value).first()
     else:
         user = User.query.filter_by(username=login_value).first()
 
     if user and user.check_password(password):
-        # In a real app, you'd return a JWT or set a session
-        return jsonify({"message": "Logged in successfully"}), 200
+        # Convert user ID to string when creating the token
+        access_token = create_access_token(identity=str(user.id))
+        return jsonify({
+            "message": "Logged in successfully",
+            "access_token": access_token
+        }), 200
     else:
         return jsonify({"message": "Invalid login or password"}), 401

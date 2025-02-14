@@ -38,6 +38,9 @@ postgres=# \q
 5. Set up environment variables:
 ```bash
 cp .env.example .env
+# Generate both SECRET_KEY and JWT_SECRET_KEY at once
+python3 -c "import secrets; print(f'SECRET_KEY={secrets.token_urlsafe(32)}\nJWT_SECRET_KEY={secrets.token_hex(32)}')" >> .env
+
 ```
 *Ensure your `.env` file contains valid credentials, for example:*
 ```ini
