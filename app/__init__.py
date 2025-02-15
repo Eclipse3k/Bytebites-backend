@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_jwt_extended import JWTManager
@@ -23,6 +23,11 @@ def create_app(config_class=None):
     db.init_app(app)
     migrate.init_app(app, db)
     jwt.init_app(app)
+    
+    # Custom JWT error handler
+    @jwt.invalid_token_loader
+    def invalid_token_callback(error_string):
+        return jsonify({"message": "Invalid token"}), 422
     
     # Register blueprints
     from .auth import auth_bp

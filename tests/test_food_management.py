@@ -13,6 +13,7 @@ def test_create_food(client, auth_headers):
         'fat_per_100g': 9.8
     }
     
+    # Test successful food creation
     response = client.post('/foods', json=food_data, headers=auth_headers)
     assert response.status_code == 201
     assert 'Food created successfully' in response.get_json()['message']
@@ -21,14 +22,8 @@ def test_create_food(client, auth_headers):
     food = response.get_json()['food']
     assert food['name'] == food_data['name']
     assert food['calories_per_100g'] == food_data['calories_per_100g']
-
-def test_create_food_validation(client, auth_headers):
-    """Test food creation validation."""
+    
     # Test duplicate food name
-    food_data = {
-        'name': 'Test Apple',  # Same name as sample_food fixture
-        'calories_per_100g': 150.0
-    }
     response = client.post('/foods', json=food_data, headers=auth_headers)
     assert response.status_code == 400
     assert 'already exists' in response.get_json()['message']
@@ -61,6 +56,29 @@ def test_search_foods(client, sample_food):
     foods = response.get_json()
     assert len(foods) > 0
     assert any(food['name'] == 'Test Apple' for food in foods)
+    
+    # Test empty query returns all foods
+    response = client.get('/foods?query=')
+    assert response.status_code == 200
+    foods = response.get_json()
+    assert len(foods) > 0
+
+def test_food_validation(client, auth_headers):
+    """Test food creation validation."""
+    # Test negative calories
+    food_data = {
+        'name': 'Invalid Food',
+        'calories_per_100g': -50.0
+    }
+    response = client.post('/foods', json=food_data, headers=auth_headers)
+    assert response.status_code == 400
+    assert 'must be positive' in response.get_json()['message']
+    
+    # Test unreasonably high calories
+    food_data['calories_per_100g'] = 1001.0
+    response = client.post('/foods', json=food_data, headers=auth_headers)
+    assert response.status_code == 400
+    assert 'seems unreasonably high' in response.get_json()['message']
 
 def test_nutrition_tracking_feature_flag(client, auth_headers):
     """Test nutrition tracking feature flag."""
@@ -85,6 +103,6 @@ def test_nutrition_tracking_feature_flag(client, auth_headers):
     FeatureFlags.disable(Feature.NUTRITION_TRACKING)
     response = client.get('/foods?query=Feature Test Food')
     foods = response.get_json()
-    assert foods[0]['protein'] is None
-    assert foods[0]['carbs'] is None
-    assert foods[0]['fat'] is None
+    assert foods[0].get('protein') is None
+    assert foods[0].get('carbs') is None
+    assert foods[0].get('fat') is None

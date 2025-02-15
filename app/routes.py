@@ -9,28 +9,21 @@ routes_bp = Blueprint('routes', __name__)
 @routes_bp.route('/foods', methods=['GET'])
 def search_foods():
     query = request.args.get('query', '')
-    language = request.args.get('language', 'es')  # Default to Spanish
     
     # Using unaccent and case-insensitive search
     foods = Food.query.filter(
         func.unaccent(func.lower(Food.name)).like(
             func.unaccent(func.lower(f"%{query}%"))
         )
-    )
-    
-    if language:
-        foods = foods.filter(Food.language_code == language)
-    
-    foods = foods.all()
+    ).all()
     
     return jsonify([{
         "id": food.id,
         "name": food.name,
-        "calories": food.calories_per_100g,
-        "protein": food.protein_per_100g,
-        "carbs": food.carbs_per_100g,
-        "fat": food.fat_per_100g,
-        "language_code": food.language_code
+        "calories_per_100g": food.calories_per_100g,
+        "protein_per_100g": food.protein_per_100g,
+        "carbs_per_100g": food.carbs_per_100g,
+        "fat_per_100g": food.fat_per_100g
     } for food in foods])
 
 @routes_bp.route('/foods', methods=['POST'])
@@ -43,10 +36,17 @@ def create_food():
         
     if Food.query.filter_by(name=data['name']).first():
         return jsonify({"message": "A food with this name already exists"}), 400
+    
+    # Validate calories
+    calories = float(data['calories_per_100g'])
+    if calories <= 0:
+        return jsonify({"message": "Calories per 100g must be positive"}), 400
+    if calories > 1000:
+        return jsonify({"message": "Calories per 100g seems unreasonably high"}), 400
         
     food = Food(
         name=data['name'],
-        calories_per_100g=data['calories_per_100g'],
+        calories_per_100g=calories,
         protein_per_100g=data.get('protein_per_100g'),
         carbs_per_100g=data.get('carbs_per_100g'),
         fat_per_100g=data.get('fat_per_100g')
@@ -60,7 +60,10 @@ def create_food():
         "food": {
             "id": food.id,
             "name": food.name,
-            "calories_per_100g": food.calories_per_100g
+            "calories_per_100g": food.calories_per_100g,
+            "protein_per_100g": food.protein_per_100g,
+            "carbs_per_100g": food.carbs_per_100g,
+            "fat_per_100g": food.fat_per_100g
         }
     }), 201
 

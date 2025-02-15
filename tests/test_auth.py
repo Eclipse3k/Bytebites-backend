@@ -121,3 +121,8 @@ def test_token_authentication(client, auth_headers):
     response = client.get('/food_logs/1')
     assert response.status_code == 401
     assert b'Missing Authorization Header' in response.data
+    
+    # Test malformed token
+    response = client.get('/food_logs/1', headers={'Authorization': 'Bearer invalid-token'})
+    assert response.status_code == 422
+    assert b'Invalid token' in response.data
