@@ -27,23 +27,43 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Set up PostgreSQL databases:
+4. Reset and Set up PostgreSQL databases:
 
-Create the necessary databases using command line:
-```bash
-createdb -U jorge bytebites_dev
-createdb -U jorge bytebites_test
-createdb -U jorge bytebites
-```
-If you need to remove the databases:
+First, drop existing databases if they exist:
 ```bash
 dropdb -U jorge bytebites_dev
 dropdb -U jorge bytebites_test
 dropdb -U jorge bytebites
 ```
+
+Create fresh databases:
+```bash
+createdb -U jorge bytebites_dev && createdb -U jorge bytebites_test && createdb -U jorge bytebites
+```
+
+Add required PostgreSQL extensions to each database:
+```bash
+psql -U jorge -d bytebites_dev -c "CREATE EXTENSION IF NOT EXISTS unaccent;"
+psql -U jorge -d bytebites_test -c "CREATE EXTENSION IF NOT EXISTS unaccent;"
+psql -U jorge -d bytebites -c "CREATE EXTENSION IF NOT EXISTS unaccent;"
+```
+
 Note: If you get authentication errors, make sure your PostgreSQL user has the necessary permissions.
 
-5. Set up environment variables:
+5. Reset migrations and create fresh ones:
+```bash
+# Remove old migrations
+rm -rf migrations/
+
+# Initialize new migrations folder
+flask db init
+
+# Create and apply initial migration
+flask db migrate -m "initial migration"
+flask db upgrade
+```
+
+6. Set up environment variables:
 ```bash
 cp .env.example .env
 ```
@@ -55,7 +75,7 @@ Generate secure keys for your environment:
 python3 -c "import secrets; print(f'SECRET_KEY={secrets.token_urlsafe(32)}\nJWT_SECRET_KEY={secrets.token_hex(32)}\nTEST_JWT_SECRET_KEY={secrets.token_hex(32)}')" >> .env
 ```
 
-6. Initialize the databases:
+7. Initialize the databases:
 
 For development database:
 ```bash
