@@ -29,13 +29,19 @@ pip install -r requirements.txt
 
 4. Set up PostgreSQL databases:
 
-First, ensure PostgreSQL is running and create the databases:
+Create the necessary databases using command line:
 ```bash
-sudo -u postgres psql
-postgres=# CREATE DATABASE bytebites_dev;
-postgres=# CREATE DATABASE bytebites_test;
-postgres=# \q
+createdb -U jorge bytebites_dev
+createdb -U jorge bytebites_test
+createdb -U jorge bytebites
 ```
+If you need to remove the databases:
+```bash
+dropdb -U jorge bytebites_dev
+dropdb -U jorge bytebites_test
+dropdb -U jorge bytebites
+```
+Note: If you get authentication errors, make sure your PostgreSQL user has the necessary permissions.
 
 5. Set up environment variables:
 ```bash
@@ -46,7 +52,6 @@ Edit your `.env` file with the following configuration:
 
 Generate secure keys for your environment:
 ```bash
-# Generate all required keys at once
 python3 -c "import secrets; print(f'SECRET_KEY={secrets.token_urlsafe(32)}\nJWT_SECRET_KEY={secrets.token_hex(32)}\nTEST_JWT_SECRET_KEY={secrets.token_hex(32)}')" >> .env
 ```
 
