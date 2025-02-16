@@ -24,6 +24,10 @@ def create_app(config_class=None):
     migrate.init_app(app, db)
     jwt.init_app(app)
     
+    # Setup security features
+    from .security import setup_security
+    app = setup_security(app)
+    
     # Custom JWT error handler
     @jwt.invalid_token_loader
     def invalid_token_callback(error_string):
