@@ -1,11 +1,17 @@
 import pytest
+import os
 from app import create_app, db
 from app.models import User
 from config import TestingConfig
 
-@pytest.fixture
+@pytest.fixture(autouse=True)
 def app():
+    """Create application for testing"""
+    # Ensure we're using test database
+    os.environ['FLASK_ENV'] = 'testing'
+    
     app = create_app(TestingConfig)
+    
     with app.app_context():
         db.create_all()
         yield app

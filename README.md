@@ -27,7 +27,9 @@ source venv/bin/activate  # On Windows: venv\Scripts\activate
 pip install -r requirements.txt
 ```
 
-4. Set up PostgreSQL databases (replace credentials if needed):
+4. Set up PostgreSQL databases:
+
+First, ensure PostgreSQL is running and create the databases:
 ```bash
 sudo -u postgres psql
 postgres=# CREATE DATABASE bytebites_dev;
@@ -38,95 +40,117 @@ postgres=# \q
 5. Set up environment variables:
 ```bash
 cp .env.example .env
-# Generate both SECRET_KEY and JWT_SECRET_KEY at once
-python3 -c "import secrets; print(f'SECRET_KEY={secrets.token_urlsafe(32)}\nJWT_SECRET_KEY={secrets.token_hex(32)}')" >> .env
-
-```
-*Ensure your `.env` file contains valid credentials, for example:*
-```ini
-FLASK_ENV=development
-SECRET_KEY=f8b51437643dbbfd614adaf0c961dde6
-JWT_SECRET_KEY=your-jwt-secret-key-change-this
-
-# Database
-DATABASE_URL=postgresql://jorge:4345@localhost/bytebites_dev
-DATABASE_TEST_URL=postgresql://jorge:4345@localhost/bytebites_test
 ```
 
-6. Initialize the database:
+Edit your `.env` file with the following configuration:
+
+Generate secure keys for your environment:
 ```bash
-flask db migrate -m "Initial migration"
-flask db upgrade
+# Generate all required keys at once
+python3 -c "import secrets; print(f'SECRET_KEY={secrets.token_urlsafe(32)}\nJWT_SECRET_KEY={secrets.token_hex(32)}\nTEST_JWT_SECRET_KEY={secrets.token_hex(32)}')" >> .env
 ```
+
+6. Initialize the databases:
+
+For development database:
+```bash
+# Set environment to development
+Modify the `FLASK_ENV` variable in the `.env` file to `development`.
+
+# Initialize database schema
+flask db upgrade
+
+# Populate development database with USDA food data
+python scripts/populate_foods.py
+```
+
+For test database, the schema will be automatically managed by the test suite, so no manual setup is required.
 
 ## Development
 
 ### Running the Application
 
-Start the application in development mode by running:
+Start the development server:
 ```bash
+export FLASK_ENV=development  # Ensure you're in development mode
 python run.py
 ```
-or
+
+The API will be available at `http://localhost:5000`.
+
+### Database Management
+
+The application uses different databases based on the environment:
+- Development: `bytebites_dev` - Used during development
+- Testing: `bytebites_test` - Used automatically during test runs
+- Production: `bytebites` - Used in production environment
+
+To switch between environments:
 ```bash
-flask run
+export FLASK_ENV=development  # For development database
+export FLASK_ENV=testing     # For test database
+export FLASK_ENV=production  # For production database
 ```
-The application will be available at `http://localhost:5000`.
 
 ### Running Tests
 
-To run all tests:
+The test suite automatically uses the test database:
 ```bash
+# Run all tests
 python -m pytest
-```
 
-To run the tests with a coverage report:
-```bash
+# Run specific test file
+python -m pytest tests/test_auth.py -v
+
+# Run tests with coverage report
 python -m pytest --cov=app tests/
 ```
 
-To run a specific test file:
-```bash
-python -m pytest tests/test_auth.py -v
-```
-
-*Notes:*
-- The tests use the database specified in `DATABASE_TEST_URL` and will automatically create/drop tables for each run.
-- Your tests check for conditions such as:
-  - Successful registration (status code 201)
-  - Handling of duplicate username/email (status code 400)
-  - Validations for missing required fields (status code 400)
-  - Correct responses for login with valid credentials (status code 200), invalid password and user (status code 401), and missing fields (status code 400).
+Note: The test database is automatically created and populated as needed during test runs.
 
 ### Database Migrations
 
-When making changes to your models, run:
+When making changes to your models:
 ```bash
+export FLASK_ENV=development  # Ensure you're in development mode
 flask db migrate -m "Description of changes"
 flask db upgrade
 ```
+
+### Updating Food Database
+
+To update or repopulate the food database:
+1. Ensure you have a valid USDA API key in your `.env` file
+2. Set the correct environment:
+   ```bash
+   export FLASK_ENV=development  # For updating development database
+   ```
+3. Run the population script:
+   ```bash
+   python scripts/populate_foods.py
+   ```
 
 ## Project Structure
 
 ```
 bytebites-backend/
-├── app/
-│   ├── __init__.py
-│   ├── models.py
-│   └── routes/
-├── config/
-│   ├── __init__.py
-│   ├── base.py
-│   ├── development.py
-│   ├── production.py
-│   └── testing.py
-├── migrations/
-├── tests/
-├── .env.example
-├── .gitignore
-├── README.md
-├── requirements.txt
-└── run.py
+├── app/                 # Application package
+│   ├── __init__.py     # App initialization
+│   ├── models.py       # Database models
+│   ├── auth.py         # Authentication routes
+│   └── routes/         # API routes
+├── config/             # Configuration package
+│   ├── __init__.py     # Config initialization
+│   ├── base.py         # Base configuration
+│   ├── development.py  # Development config
+│   ├── production.py   # Production config
+│   └── testing.py      # Testing config
+├── migrations/         # Database migrations
+├── tests/             # Test suite
+├── scripts/           # Utility scripts
+├── .env.example       # Environment template
+├── requirements.txt    # Dependencies
+└── run.py             # Application entry point
 ```
 
 ## License
