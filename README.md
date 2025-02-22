@@ -18,11 +18,9 @@ cd bytebites-backend
 
 2. Create and activate a virtual environment:
 ```bash
-python3 -m venv venv
-source venv/bin/activate  
+python -m venv venv
+source venv/bin/activate  # On Windows: venv\Scripts\activate
 ```
-On Windows: venv\Scripts\activate
-
 
 3. Install dependencies:
 ```bash
@@ -52,20 +50,7 @@ psql -U jorge -d bytebites -c "CREATE EXTENSION IF NOT EXISTS unaccent;"
 
 Note: If you get authentication errors, make sure your PostgreSQL user has the necessary permissions.
 
-5. Reset migrations and create fresh ones:
-```bash
-# Remove old migrations
-rm -rf migrations/
-
-# Initialize new migrations folder
-flask db init
-
-# Create and apply initial migration
-flask db migrate -m "initial migration"
-flask db upgrade
-```
-
-6. Set up environment variables:
+5. Set up environment variables:
 ```bash
 cp .env.example .env
 ```
@@ -74,7 +59,19 @@ Edit your `.env` file with the following configuration:
 
 Generate secure keys for your environment:
 ```bash
-python3 -c "import secrets; print(f'SECRET_KEY={secrets.token_urlsafe(32)}\nJWT_SECRET_KEY={secrets.token_hex(32)}\nTEST_JWT_SECRET_KEY={secrets.token_hex(32)}')" >> .env
+python3 -c "import secrets; print(f'\nSECRET_KEY={secrets.token_urlsafe(32)}\nJWT_SECRET_KEY={secrets.token_hex(32)}\nTEST_JWT_SECRET_KEY={secrets.token_hex(32)}')" >> .env
+```
+
+6. Reset migrations and create fresh ones:
+```bash
+rm -rf migrations/
+``` 
+
+```bash
+flask db init
+
+flask db migrate -m "initial migration"
+flask db upgrade
 ```
 
 7. Initialize the databases:
