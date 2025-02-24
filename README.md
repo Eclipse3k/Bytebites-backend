@@ -21,6 +21,7 @@ cd bytebites-backend
 python -m venv venv
 source venv/bin/activate  
 ```
+On fish: source venv/bin/activate.fish
 On Windows: venv\Scripts\activate
 
 3. Install dependencies:
